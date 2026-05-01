@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>.NET Version Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .last-scan {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            color: #999;
+            font-size: 0.95em;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .card h3 {
+            color: #999;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .card .value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .filters-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .filters-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.95em;
+            transition: border-color 0.3s;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button.secondary {
+            background: #999;
+        }
+
+        button.secondary:hover {
+            background: #777;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .results-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f5f5f5;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            color: #333;
+            font-weight: 600;
+            border-bottom: 2px solid #ddd;
+            font-size: 0.95em;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        a {
+            color: #667eea;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        a:hover {
+            color: #5568d3;
+            text-decoration: underline;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .owner-badge {
+            display: inline-block;
+            background: #f0f0f0;
+            color: #333;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .pagination button {
+            margin: 0 5px;
+        }
+
+        .result-count {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .summary-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 0.85em;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>.NET Version Dashboard</h1>
+            <p>Interactive dashboard for tracking .NET versions across GitHub repositories</p>
+            <div class="last-scan" id="lastScan">Loading scan information...</div>
+        </div>
+
+        <div class="summary-cards" id="summaryCards">
+            <div class="card">
+                <h3>Total Entries</h3>
+                <div class="value" id="totalEntries">-</div>
+            </div>
+            <div class="card">
+                <h3>Unique Repos</h3>
+                <div class="value" id="uniqueRepos">-</div>
+            </div>
+            <div class="card">
+                <h3>Unique Owners</h3>
+                <div class="value" id="uniqueOwners">-</div>
+            </div>
+            <div class="card">
+                <h3>.NET Versions</h3>
+                <div class="value" id="versionCount">-</div>
+            </div>
+        </div>
+
+        <div class="filters-section">
+            <h2>Filters</h2>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="versionFilter">.NET Version</label>
+                    <select id="versionFilter">
+                        <option value="">All versions</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="repositoryFilter">Repository</label>
+                    <input type="text" id="repositoryFilter" placeholder="Search repository name...">
+                </div>
+                <div class="filter-group">
+                    <label for="ownerFilter">Owner</label>
+                    <input type="text" id="ownerFilter" placeholder="Search owner name...">
+                </div>
+                <div class="filter-group">
+                    <label for="dateFilter">Last Scanned (After)</label>
+                    <input type="date" id="dateFilter">
+                </div>
+            </div>
+            <div class="button-group">
+                <button onclick="applyFilters()">Apply Filters</button>
+                <button onclick="clearFilters()" class="secondary">Clear Filters</button>
+            </div>
+        </div>
+
+        <div class="charts-section">
+            <div class="chart-container">
+                <h3>Version Distribution</h3>
+                <div class="chart-wrapper">
+                    <canvas id="versionChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>Top Repositories</h3>
+                <div class="chart-wrapper">
+                    <canvas id="reposChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <h2>Detailed Results</h2>
+            <div class="result-count" id="resultCount">Loading...</div>
+            <div class="table-wrapper">
+                <table id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>Repository</th>
+                            <th>Owner</th>
+                            <th>.NET Version</th>
+                            <th>File</th>
+                            <th>Last Scanned</th>
+                            <th>Link</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="6" class="loading">Loading dashboard data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+
+    <script>
+        let allResults = [];
+        let stats = {};
+        let filteredResults = [];
+        let currentPage = 1;
+        const itemsPerPage = 50;
+
+        // Initialize dashboard
+        async function initDashboard() {
+            try {
+                // Load stats
+                const statsResponse = await fetch('data/stats.json');
+                if (statsResponse.ok) {
+                    stats = await statsResponse.json();
+                    updateSummaryCards();
+                    populateVersionFilter();
+                    populateCharts();
+                }
+
+                // Load results
+                const resultsResponse = await fetch('data/results.json');
+                if (resultsResponse.ok) {
+                    allResults = await resultsResponse.json();
+                    filteredResults = [...allResults];
+                    renderTable();
+                } else {
+                    showError('No scan data available yet. Run the workflow to generate data.');
+                }
+            } catch (error) {
+                showError('Error loading dashboard: ' + error.message);
+            }
+        }
+
+        function updateSummaryCards() {
+            document.getElementById('totalEntries').textContent = stats.total_entries || 0;
+            document.getElementById('uniqueRepos').textContent = stats.unique_repos || 0;
+            document.getElementById('uniqueOwners').textContent = stats.unique_owners || 0;
+            document.getElementById('versionCount').textContent = Object.keys(stats.versions || {}).length;
+            
+            const lastScan = new Date(stats.last_scan);
+            document.getElementById('lastScan').innerHTML = 
+                `<strong>Last Scan:</strong> ${lastScan.toLocaleString()} UTC`;
+        }
+
+        function populateVersionFilter() {
+            const select = document.getElementById('versionFilter');
+            const versions = Object.keys(stats.versions || {}).sort();
+            versions.forEach(version => {
+                const option = document.createElement('option');
+                option.value = version;
+                option.textContent = `${version} (${stats.versions[version]})`;
+                select.appendChild(option);
+            });
+        }
+
+        function populateCharts() {
+            const versionCtx = document.getElementById('versionChart').getContext('2d');
+            const versions = Object.keys(stats.versions || {}).sort();
+            const counts = versions.map(v => stats.versions[v]);
+
+            new Chart(versionCtx, {
+                type: 'bar',
+                data: {
+                    labels: versions,
+                    datasets: [{
+                        label: 'Repository Count',
+                        data: counts,
+                        backgroundColor: '#667eea',
+                        borderColor: '#667eea',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            const repoCtx = document.getElementById('reposChart').getContext('2d');
+            const topRepos = (stats.top_repos || []).slice(0, 8);
+            const repoNames = topRepos.map(r => r.repository.split('/')[1]);
+            const repoCounts = topRepos.map(r => r.count);
+            const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe', '#43e97b', '#fa7343', '#fee140'];
+
+            new Chart(repoCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: repoNames,
+                    datasets: [{
+                        data: repoCounts,
+                        backgroundColor: colors.slice(0, topRepos.length)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function applyFilters() {
+            const versionFilter = document.getElementById('versionFilter').value;
+            const repositoryFilter = document.getElementById('repositoryFilter').value.toLowerCase();
+            const ownerFilter = document.getElementById('ownerFilter').value.toLowerCase();
+            const dateFilter = document.getElementById('dateFilter').value;
+
+            filteredResults = allResults.filter(result => {
+                if (versionFilter && result.version !== versionFilter) return false;
+                if (repositoryFilter && !result.repository.toLowerCase().includes(repositoryFilter)) return false;
+                if (ownerFilter && !result.owner.toLowerCase().includes(ownerFilter)) return false;
+                if (dateFilter && new Date(result.scanned_at) < new Date(dateFilter)) return false;
+                return true;
+            });
+
+            currentPage = 1;
+            renderTable();
+        }
+
+        function clearFilters() {
+            document.getElementById('versionFilter').value = '';
+            document.getElementById('repositoryFilter').value = '';
+            document.getElementById('ownerFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            
+            filteredResults = [...allResults];
+            currentPage = 1;
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageResults = filteredResults.slice(start, end);
+
+            if (pageResults.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="no-data">No results found</td></tr>';
+                document.getElementById('pagination').innerHTML = '';
+                document.getElementById('resultCount').textContent = 'No results';
+                return;
+            }
+
+            tbody.innerHTML = pageResults.map(result => `
+                <tr>
+                    <td><a href="${result.url}" target="_blank">${result.repository}</a></td>
+                    <td><span class="owner-badge">${result.owner}</span></td>
+                    <td><span class="version-badge">${result.version}</span></td>
+                    <td><small>${result.file_name}</small></td>
+                    <td><small>${new Date(result.scanned_at).toLocaleString()}</small></td>
+                    <td><a href="${result.file_url}" target="_blank">View →</a></td>
+                </tr>
+            `).join('');
+
+            // Pagination
+            const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
+            const paginationDiv = document.getElementById('pagination');
+            
+            if (totalPages > 1) {
+                let paginationHTML = '';
+                if (currentPage > 1) {
+                    paginationHTML += `<button onclick="goToPage(${currentPage - 1})">← Previous</button>`;
+                }
+                
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === currentPage) {
+                        paginationHTML += `<button onclick="goToPage(${i})" style="background: #764ba2;">${i}</button>`;
+                    } else if (i <= 5 || i > totalPages - 2) {
+                        paginationHTML += `<button onclick="goToPage(${i})">${i}</button>`;
+                    } else if (i === 6) {
+                        paginationHTML += `<span>...</span>`;
+                    }
+                }
+                
+                if (currentPage < totalPages) {
+                    paginationHTML += `<button onclick="goToPage(${currentPage + 1})">Next →</button>`;
+                }
+                paginationDiv.innerHTML = paginationHTML;
+            }
+
+            document.getElementById('resultCount').textContent = 
+                `Showing ${start + 1} to ${Math.min(end, filteredResults.length)} of ${filteredResults.length} results`;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderTable();
+            document.querySelector('.results-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showError(message) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = `<tr><td colspan="6" class="error">${message}</td></tr>`;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+</html>
